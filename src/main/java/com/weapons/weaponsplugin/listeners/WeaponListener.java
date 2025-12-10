@@ -6,6 +6,7 @@ import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.Player;
@@ -104,37 +105,40 @@ public class WeaponListener implements Listener {
     }
 
     /**
+     * Handles the F key press for reloading
+     */
+    @EventHandler
+    public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
+        Player player = event.getPlayer();
+        ItemStack mainHand = event.getMainHandItem();
+        ItemStack offHand = event.getOffHandItem();
+
+        // Check if the player is holding a weapon in either hand
+        if (isWeapon(mainHand) || isWeaponOffhand(offHand)) {
+            event.setCancelled(true); // Prevent the default item swap
+
+            Weapon weapon = isWeapon(mainHand) ? getWeaponFromItem(mainHand) : getWeaponFromItem(offHand);
+            if (weapon == null) return;
+
+            // Set reloading flag before calling reload
+            playerReloading.put(player.getName(), true);
+
+            // Start the reload
+            weapon.onReload(player);
+
+            // Clear the flag after a delay (e.g., 5 seconds)
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                playerReloading.put(player.getName(), false);
+            }, 100L); // 5 seconds = 100 ticks
+        }
+    }
+
+    /**
      * Obsługuje prawy klik - strzał LUB F - reload
      */
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        
-        // ========== F BUTTON (PHYSICAL) = RELOAD (BEZ PRZESUNIĘCIA!) ==========
-        if (event.getAction() == Action.PHYSICAL) {
-            ItemStack mainHand = player.getInventory().getItemInMainHand();
-            ItemStack offHand = player.getInventory().getItemInOffHand();
-            
-            // Sprawdź czy trzyma broń w którejkolwiek ręce
-            if (isWeapon(mainHand) || isWeaponOffhand(offHand)) {
-                event.setCancelled(true);  // ⚠️ WAŻNE: Blokuj domyślne F (swap)
-                
-                Weapon weapon = isWeapon(mainHand) ? getWeaponFromItem(mainHand) : getWeaponFromItem(offHand);
-                if (weapon == null) return;
-                
-                // ✅ FIX: Ustaw flag reloading PRZED callowaniem reload!
-                playerReloading.put(player.getName(), true);
-                
-                // Uruchom reload
-                weapon.onReload(player);
-                
-                // ✅ FIX: Wyczyść flag po 5 sekundach (max reload time)
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    playerReloading.put(player.getName(), false);
-                }, 100L);  // 5 sekund = 100 ticków
-            }
-            return;
-        }
         
         // Tylko prawy klik w powietrze lub w blok
         if (event.getAction() != Action.RIGHT_CLICK_AIR && 
