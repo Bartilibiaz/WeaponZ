@@ -1,0 +1,68 @@
+# AK-74 Rifle Configuration
+# WeaponsPlugin
+
+weapon:
+  # Nazwa broni (identyfikator w kodzie)
+  name: "ak-74"
+  
+  # Nazwa wyświetlana dla gracza
+  display-name: "§c§lAK-74 Rifle"
+  
+  # Konfiguracja głównej ręki (mainhand)
+  mainhand:
+    # Typ itemu (Material name)
+    type: "WARPED_FUNGUS_ON_A_STICK"
+    # Custom Model Data dla głównej ręki
+    custom-model-data: 10
+  
+  # Konfiguracja drugiej ręki (offhand)
+  offhand:
+    # Typ itemu
+    type: "WARPED_FUNGUS_ON_A_STICK"
+    # Custom Model Data dla drugiej ręki
+    custom-model-data: 11
+  
+  # Konfiguracja amunicji
+  ammunition:
+    # Typ itemu magazynku
+    item-type: "SNOWBALL"
+    # Custom Model Data magazynku
+    custom-model-data: 3
+    
+    # Liczba pocisków na magazynek
+    magazine-size: 30
+    
+    # Czas przeładowania w sekundach
+    reload-time: 1.5
+  
+  # Combat settings
+  combat:
+    # Uszkodzenie per strzał
+    damage: 7.5
+    
+    # Rozprzut bez Shifta (wcelowania)
+    # 0.0 = brak rozprzutu
+    # 0.25 = średni rozprzut
+    # 1.0 = bardzo duży rozprzut
+    spread-normal: 0.25
+    
+    # Rozprzut na Shifcie (wcelowanie)
+    # 0.05 = bardzo mały rozprzut (celna)
+    spread-scoped: 0.05
+    
+    # Delay między strzałami w sekundach
+    # 0.1 = szybko
+    # 0.5 = wolniej
+    fire-rate: 0.1
+    
+    # Range (zasięg) w blokach
+    range: 100
+  
+  # Konfiguracja dźwięków
+  sounds:
+    # Dźwięk strzału
+    shoot: "ak74.shoot"
+    # Dźwięk przeładowania
+    reload: "entity.armor_stand.place"
+    # Dźwięk braku amunicji
+    empty: "entity.item.break"
