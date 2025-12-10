@@ -1,0 +1,14 @@
+name: WeaponsPlugin
+version: 1.0.0
+main: com.weapons.weaponsplugin.WeaponsPlugin
+description: Advanced Weapons System with YAML Configuration
+api-version: 1.13
+
+commands:
+  weapons:
+    description: Weapons command
+    usage: /weapons
+
+permissions:
+  weapons.admin:
+    description: Admin permission
