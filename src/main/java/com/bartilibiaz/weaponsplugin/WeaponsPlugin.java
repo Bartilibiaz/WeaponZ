@@ -3,7 +3,7 @@ package com.bartilibiaz.weaponsplugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
 import com.bartilibiaz.weaponsplugin.listeners.WeaponListener;
-import com.bartilibiaz.weaponsplugin.listeners.KnockbackRemovalListener;
+import com.bartilibiaz.weaponsplugin.listeners.EntityDamageListener;
 import com.bartilibiaz.weaponsplugin.weapons.WeaponManager;
 import com.bartilibiaz.weaponsplugin.commands.WeaponsCommand;
 
@@ -15,7 +15,7 @@ public class WeaponsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(
-            new KnockbackRemovalListener(this),
+            new EntityDamageListener(this),
             this
         );
         getCommand("weaponsZ").setExecutor(new WeaponsCommand(this));
