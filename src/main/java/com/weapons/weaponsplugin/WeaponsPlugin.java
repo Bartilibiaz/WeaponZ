@@ -1,5 +1,6 @@
 package com.weapons.weaponsplugin;
 
+import com.weapons.weaponsplugin.listeners.DamageListener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
 import com.weapons.weaponsplugin.listeners.WeaponListener;
@@ -23,6 +24,7 @@ public class WeaponsPlugin extends JavaPlugin {
         
         // Register listeners
         Bukkit.getPluginManager().registerEvents(new WeaponListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new DamageListener(), this);
 
         getLogger().info("✓ Weapons loaded successfully!");
         getLogger().info("✓ AK-74 weapon registered");
