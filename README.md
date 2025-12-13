@@ -27,3 +27,5 @@ Advanced configurable weapon system for Paper / Spigot
 
 ✔ Per-weapon ammo & magazine
 
+✔ Easy YALM configuration
+
