@@ -2,6 +2,7 @@ package com.bartilibiaz.weaponsplugin.weapons;
 
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.bukkit.Location;
@@ -12,6 +13,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 import com.bartilibiaz.weaponsplugin.WeaponsPlugin;
 import com.bartilibiaz.weaponsplugin.config.WeaponConfig;
+
+import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect.PlaySound;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -125,7 +129,11 @@ public class DynamicWeapon extends Weapon {
         }
         
         // Spawn linii particli i sprawdzenie trafienia
-        castRayAndCreateParticles(player, direction);
+        if (config.isExplosion()) {
+            castRayExplosion(player, direction);
+        } else {
+            castRayAndCreateParticles(player, direction);
+        }
         
         // Custom dźwięk
         playCustomSound(player);
@@ -271,7 +279,17 @@ public class DynamicWeapon extends Weapon {
                 }
                 
                 LivingEntity livingEntity = (LivingEntity) entity;
+
+                // 🔥 Dodaj tag WeaponZ (plugin NoKnockback użyje go)
+                livingEntity.addScoreboardTag("weaponz_hit");
+
+                // 🔥 Zadaj obrażenia
                 livingEntity.damage(config.getDamage(), player);
+
+                // 🔥 Usuń tag po 1 ticku
+                Bukkit.getScheduler().runTaskLater(WeaponsPlugin.getInstance(), () -> {
+                    livingEntity.removeScoreboardTag("weaponz_hit");
+                }, 1L);
                 
                 particleLocation.getWorld().spawnParticle(
                     org.bukkit.Particle.SNOWFLAKE,
@@ -290,7 +308,82 @@ public class DynamicWeapon extends Weapon {
             particleLocation.add(rayDirection.clone().multiply(particleStep));
         }
     }
+    private void castRayExplosion(Player player, Vector direction) {
+        Location start = player.getEyeLocation();
+        Vector ray = direction.normalize();
+        Location pos = start.clone();
+
+        double step = 0.2;
+
+        for (double d = 0; d < config.getRange(); d += step) {
+            pos.add(ray.clone().multiply(step));
+
+            // Trafienie w blok
+            if (pos.getBlock().getType().isSolid()) {
+                explode(player, pos);
+                return;
+            }
+
+            // Trafienie w entity
+            for (Entity e : pos.getWorld().getNearbyEntities(pos, 0.5, 0.5, 0.5)) {
+                if (e instanceof LivingEntity le && !le.equals(player)) {
+                    explode(player, le.getLocation());
+                    return;
+                }
+            }
+        }
+    }
+
+    private void spawnExplosionVisual(Location loc) {
+        String sound = config.getExplosionSound();
+        loc.getWorld().spawnParticle(
+            Particle.EXPLOSION,
+            loc,
+            1
+        );
+
+        loc.getWorld().playSound(
+            loc,
+            sound,
+            1,1
+
+        );
+    }
+
+
+    private void explode(Player shooter, Location loc) {
+        spawnExplosionVisual(loc);
+        dealExplosionDamage(shooter, loc);
+    }
     
+    private void dealExplosionDamage(Player shooter, Location center) {
+        double radius = config.getExplosionRadius();
+        double maxDamage = config.getExplosionDamage();
+
+        for (Entity e : center.getWorld().getNearbyEntities(center, radius, radius, radius)) {
+            if (!(e instanceof LivingEntity target)) continue;
+            if (target.equals(shooter)) continue;
+
+            double distance = target.getLocation().distance(center);
+            if (distance > radius) continue;
+
+            // Damage falloff (im dalej, tym mniej)
+            double multiplier = 1.0 - (distance / radius);
+            double damage = maxDamage * multiplier;
+
+            // 🔥 OMIJA VANILLA MECHANIKI
+            target.damage(damage, shooter);
+
+            // Knockback
+            Vector kb = target.getLocation().toVector()
+                    .subtract(center.toVector())
+                    .normalize()
+                    .multiply(config.getExplosionKnockback());
+
+            target.setVelocity(kb);
+        }
+    }
+
     /**
      * Pobiera wszystkie entity w promieniu
      */

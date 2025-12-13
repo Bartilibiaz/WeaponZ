@@ -29,7 +29,7 @@ public class WeaponConfig {
     }
     
     public int getMainhandCmd() {
-        return config.getInt("weapon.mainhand.custom-model-data", 10);
+        return config.getInt("weapon.mainhand.custom-model-data", 1);
     }
     
     // OFFHAND
@@ -38,7 +38,7 @@ public class WeaponConfig {
     }
     
     public int getOffhandCmd() {
-        return config.getInt("weapon.offhand.custom-model-data", 11);
+        return config.getInt("weapon.offhand.custom-model-data", 1);
     }
     
     // AMMUNITION
@@ -57,7 +57,52 @@ public class WeaponConfig {
     public double getReloadTime() {
         return config.getDouble("weapon.ammunition.reload-time", 1.5);
     }
+
+    // ===== SHOOTING TYPE =====
+
+    public String getShootingType() {
+        return config.getString("weapon.shooting.type", "normal").toLowerCase();
+    }
+
+    public boolean isRightClickEnabled() {
+        return config.getBoolean("weapon.shooting.right-click", true);
+    }
+
+    public boolean isExplosion() {
+        return getShootingType().equals("explosion");
+    }
+
+    // ===== EXPLOSION CONFIG =====
+
+    public float getExplosionPower() {
+        return (float) config.getDouble("weapon.explosion.power", 3.5);
+    }
+
+    public boolean isExplosionFire() {
+        return config.getBoolean("weapon.explosion.fire", false);
+    }
+
+    public boolean isExplosionDestroyBlocks() {
+        return config.getBoolean("weapon.explosion.destroy-blocks", false);
+    }
+
+    public String getExplosionSound() {
+        return config.getString("weapon.explosion.sound", "entity.generic.explode");
+    }
+
+    public Float getExplosionRadius() {
+        return (float) config.getDouble("weapon.explosion.radius", 10);
+    }
+
+    public Float getExplosionDamage() {
+        return (float) config.getDouble("weapon.explosion.damage", 5);
+    }
+
+    public Float getExplosionKnockback() {
+        return (float) config.getDouble("weapon.explosion.knockback", 1);
+    }
     
+
     // COMBAT
     public double getDamage() {
         return config.getDouble("weapon.combat.damage", 7.5);
@@ -78,7 +123,29 @@ public class WeaponConfig {
     public int getRange() {
         return config.getInt("weapon.combat.range", 100);
     }
-    
+
+    // ===== RECOIL =====
+
+    public float getRecoilVerticalBase() {
+        return (float) config.getDouble("weapon.combat.recoil.vertical-base", 0.4);
+    }
+
+    public float getRecoilVerticalGrowth() {
+        return (float) config.getDouble("weapon.combat.recoil.vertical-growth", 0.05);
+    }
+
+    public float getRecoilHorizontalBase() {
+        return (float) config.getDouble("weapon.combat.recoil.horizontal-base", 1.5);
+    }
+
+    public float getRecoilHorizontalGrowth() {
+        return (float) config.getDouble("weapon.combat.recoil.horizontal-growth", 0.15);
+    }
+
+    public long getRecoilResetTimeMs() {
+        return config.getLong("weapon.combat.recoil.reset-time-ms", 300);
+    }
+
     // SOUNDS
     public String getSoundShoot() {
         return config.getString("weapon.sounds.shoot", "ak74.shoot");

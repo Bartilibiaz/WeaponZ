@@ -136,41 +136,7 @@ public class WeaponListener implements Listener {
     /**
      * Obsługuje prawy klik - strzał LUB F - reload
      */
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-        
-        // Tylko prawy klik w powietrze lub w blok
-        if (event.getAction() != Action.RIGHT_CLICK_AIR && 
-            event.getAction() != Action.RIGHT_CLICK_BLOCK) {
-            return;
-        }
-
-        ItemStack mainHand = player.getInventory().getItemInMainHand();
-        ItemStack offHand = player.getInventory().getItemInOffHand();
-
-        // ========== STRZAŁ Z MAINHAND (bez Shifta) ==========
-        if (isWeapon(mainHand) && !player.isSneaking()) {
-            event.setCancelled(true);
-            
-            Weapon weapon = getWeaponFromItem(mainHand);
-            if (weapon != null) {
-                plugin.getWeaponManager().shootWeapon(player, weapon, false);
-            }
-            return;
-        }
-
-        // ========== STRZAŁ Z OFFHAND (na Shifcie) ==========
-        if (isWeaponOffhand(offHand) && player.isSneaking()) {
-            event.setCancelled(true);
-            
-            Weapon weapon = getWeaponFromItem(offHand);
-            if (weapon != null) {
-                plugin.getWeaponManager().shootWeapon(player, weapon, true);
-            }
-            return;
-        }
-    }
+    
 
     /**
      * Blokuj wyrzucanie snowball'a z custom model data (magazynki)

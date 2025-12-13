@@ -2,10 +2,12 @@ package com.bartilibiaz.weaponsplugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
+
+import com.bartilibiaz.weaponsplugin.listeners.WeaponClickListener;
 import com.bartilibiaz.weaponsplugin.listeners.WeaponListener;
-import com.bartilibiaz.weaponsplugin.listeners.KnockbackRemovalListener;
 import com.bartilibiaz.weaponsplugin.weapons.WeaponManager;
 import com.bartilibiaz.weaponsplugin.commands.WeaponsCommand;
+import com.bartilibiaz.weaponsplugin.functions.NoKnockbackNoHurtResistPlugin;
 
 public class WeaponsPlugin extends JavaPlugin {
 
@@ -14,8 +16,12 @@ public class WeaponsPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        getServer().getPluginManager().registerEvents(
-            new KnockbackRemovalListener(this),
+        Bukkit.getPluginManager().registerEvents(
+            new NoKnockbackNoHurtResistPlugin(this),
+            this
+        );
+        Bukkit.getPluginManager().registerEvents(
+            new WeaponClickListener(this),
             this
         );
         getCommand("weaponsZ").setExecutor(new WeaponsCommand(this));
