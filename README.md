@@ -7,7 +7,7 @@ Advanced configurable weapon system for Paper / Spigot
 
 ✔ Raycast-based shooting
 
-✔ Per-weapon recoil (kamera gracza)
+✔ Per-weapon recoil (player camera)
 
 ✔ Single-shot & Full-auto
 
