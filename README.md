@@ -29,3 +29,5 @@ Advanced configurable weapon system for Paper / Spigot
 
 ✔ Easy YALM configuration
 
+Full documentation is available in the  
+➡️ [WeaponZ Wiki](https://github.com/TWOJ_NICK/WeaponZ/wiki)
