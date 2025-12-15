@@ -1,4 +1,4 @@
-name: WeaponsPlugin
+name: WeaponsZ
 version: 1.0.0
 main: com.bartilibiaz.weaponsplugin.WeaponsPlugin
 description: Advanced Weapons System with YAML Configuration

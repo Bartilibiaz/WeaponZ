@@ -24,8 +24,8 @@ public class WeaponListener implements Listener {
 
     private WeaponsPlugin plugin;
     private Map<String, Boolean> playerShiftState = new HashMap<>();
-    private Map<String, Boolean> playerReloading = new HashMap<>();  // ✅ NOWY: track reload status
-
+    public static  Map<String, Boolean> playerReloading = new HashMap<>();  // ✅ NOWY: track reload status
+    private Map<String, Integer> playerReloadTaskId = new HashMap<>();
     public WeaponListener(WeaponsPlugin plugin) {
         this.plugin = plugin;
     }
@@ -40,9 +40,7 @@ public class WeaponListener implements Listener {
         boolean isSneaking = event.isSneaking();
         
         // ✅ FIX: Sprawdź czy gracz przeładowuje!
-        if (playerReloading.getOrDefault(player.getName(), false)) {
-            return;  // Nie przerzucaj podczas reloadu!
-        }
+        
 
         ItemStack mainHand = player.getInventory().getItemInMainHand();
         ItemStack offHand = player.getInventory().getItemInOffHand();
@@ -51,7 +49,9 @@ public class WeaponListener implements Listener {
         if (isSneaking && isWeapon(mainHand)) {
             Weapon weapon = getWeaponFromItem(mainHand);
             if (weapon == null) return;
-            
+            if (playerReloading.getOrDefault(player.getName(), false)) {
+                return;  // Nie przerzucaj podczas reloadu!
+            }
             DynamicWeapon dynamicWeapon = (DynamicWeapon) weapon;
             
             // Pobierz amunicję z mainhand
@@ -112,24 +112,34 @@ public class WeaponListener implements Listener {
         Player player = event.getPlayer();
         ItemStack mainHand = event.getMainHandItem();
         ItemStack offHand = event.getOffHandItem();
+    
+        // Jeśli gracz nie trzyma broni w żadnej ręce – wyjdź
+        if (!isWeapon(mainHand) && !isWeaponOffhand(offHand)) return;
+    
+        // Anuluj domyślną zmianę ręki
+        event.setCancelled(true);
+    
+        // Pobierz broń
+        DynamicWeapon weapon = isWeapon(mainHand) ? (DynamicWeapon) getWeaponFromItem(mainHand)
+                                                  : (DynamicWeapon) getWeaponFromItem(offHand);
+        if (weapon == null) return;
+    
+        // Anuluj reload, jeśli trwa
+        cancelReload(player);
+    
+        // Wywołaj reload (DynamicWeapon sam ustawia ammo, dźwięki, progress bar)
+        weapon.onReload(player);
+    }
 
-        // Check if the player is holding a weapon in either hand
-        if (isWeapon(mainHand) || isWeaponOffhand(offHand)) {
-            event.setCancelled(true); // Prevent the default item swap
 
-            Weapon weapon = isWeapon(mainHand) ? getWeaponFromItem(mainHand) : getWeaponFromItem(offHand);
-            if (weapon == null) return;
-
-            // Set reloading flag before calling reload
-            playerReloading.put(player.getName(), true);
-
-            // Start the reload
-            weapon.onReload(player);
-
-            // Clear the flag after a delay (e.g., 5 seconds)
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                playerReloading.put(player.getName(), false);
-            }, 10L); // 5 seconds = 100 ticks
+    private void cancelReload(Player player) {
+        if (playerReloading.getOrDefault(player.getName(), false)) {
+            Integer taskId = playerReloadTaskId.get(player.getName());
+            if (taskId != null) Bukkit.getScheduler().cancelTask(taskId);
+        
+            playerReloading.put(player.getName(), false);
+            playerReloadTaskId.remove(player.getName());
+            player.sendActionBar("§cReload cancelled!");
         }
     }
 

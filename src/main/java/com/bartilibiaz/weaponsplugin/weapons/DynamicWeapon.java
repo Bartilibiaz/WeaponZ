@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
+import org.eclipse.sisu.inject.Weak;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -12,7 +13,11 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 import com.bartilibiaz.weaponsplugin.WeaponsPlugin;
+import com.bartilibiaz.weaponsplugin.api.WeaponZAPI;
+import com.bartilibiaz.weaponsplugin.api.events.WeaponKillPlayerEvent;
+import com.bartilibiaz.weaponsplugin.api.events.WeaponShootEvent;
 import com.bartilibiaz.weaponsplugin.config.WeaponConfig;
+import com.bartilibiaz.weaponsplugin.listeners.WeaponListener;
 
 import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect.PlaySound;
 
@@ -100,7 +105,10 @@ public class DynamicWeapon extends Weapon {
         
         // Określ którą rękę trzymasz
         ItemStack weapon = player.isSneaking() ? offHand : mainHand;
-        
+        WeaponZAPI.addShot(player);
+        Bukkit.getPluginManager().callEvent(
+            new WeaponShootEvent(player, weapon)
+        );
         // Sprawdź czy gracz ma amunicję w broni
         int currentAmmo = getWeaponAmmo(weapon);  // ✅ FIX: Bez parametru config.getMagazineSize()
         if (currentAmmo <= 0) {
@@ -183,10 +191,11 @@ public class DynamicWeapon extends Weapon {
     private void startReload(Player player, ItemStack weapon) {
         String playerName = player.getName();
         double reloadTime = config.getReloadTime();
-        
+        WeaponListener.playerReloading.put(playerName, true);
         // Jeśli już trwa reload, anuluj go
         if (reloadTasks.containsKey(playerName)) {
             reloadTasks.get(playerName).cancel();
+            WeaponListener.playerReloading.put(playerName, false);
         }
         
         // Progressbar: reloadTime w sekundach / 15 ticków
@@ -239,6 +248,7 @@ public class DynamicWeapon extends Weapon {
                         taskToCancel.cancel();
                     }
                     reloadTasks.remove(playerName);
+                    WeaponListener.playerReloading.put(playerName, false);
                 }
             }
         }, 0L, (long)(reloadTime * 20 / 15));  // 20 ticks = 1 sekunda
@@ -278,17 +288,30 @@ public class DynamicWeapon extends Weapon {
                     continue;
                 }
                 
-                LivingEntity livingEntity = (LivingEntity) entity;
-
-                // 🔥 Dodaj tag WeaponZ (plugin NoKnockback użyje go)
-                livingEntity.addScoreboardTag("weaponz_hit");
-
+                LivingEntity living = (LivingEntity) entity;
+                            
+                // 🔥 Tag (NoKnockback / inne pluginy)
+                living.addScoreboardTag("weaponz_hit");
+                            
+                double damage = config.getDamage();
+                            
                 // 🔥 Zadaj obrażenia
-                livingEntity.damage(config.getDamage(), player);
-
+                living.damage(damage, player);
+                            
+                // 🔥 JEŚLI TO GRACZ → sprawdzamy czy zginie
+                if (living instanceof Player victim) {
+                    double finalHealth = victim.getHealth() - damage;
+                
+                    if (finalHealth <= 0) {
+                        Bukkit.getPluginManager().callEvent(
+                            new WeaponKillPlayerEvent(player, victim, this)
+                        );
+                    }
+                }
+                
                 // 🔥 Usuń tag po 1 ticku
                 Bukkit.getScheduler().runTaskLater(WeaponsPlugin.getInstance(), () -> {
-                    livingEntity.removeScoreboardTag("weaponz_hit");
+                    living.removeScoreboardTag("weaponz_hit");
                 }, 1L);
                 
                 particleLocation.getWorld().spawnParticle(

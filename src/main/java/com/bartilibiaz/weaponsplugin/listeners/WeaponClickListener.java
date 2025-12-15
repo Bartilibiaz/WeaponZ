@@ -45,7 +45,6 @@ public class WeaponClickListener implements Listener {
             if (!isWeapon(weapon) && !isWeaponOffhand(weapon)) {
                 return;
             }
-        
             event.setCancelled(true); // ✅ TYLKO DLA BRONI
             
             // ✅ Sprawdź cooldown
@@ -64,9 +63,15 @@ public class WeaponClickListener implements Listener {
             
             // ✅ STRZAŁ!
             Weapon weaponObj = isWeapon(weapon) ? getWeaponFromItem(weapon) : getWeaponFromItem(weapon);
-            if (weaponObj != null) {
+            if (weaponObj == null) return;
+
+                // ❌ BLOKUJ STRZAŁ PODCZAS RELOADU
+                if (WeaponListener.playerReloading.getOrDefault(player.getName(), false)) {
+                    return;
+                }
+
+                // ✅ STRZAŁ
                 plugin.getWeaponManager().shootWeapon(player, weaponObj, player.isSneaking());
-            }
             
             // Update cooldown
             singleShotCooldown.put(playerKey, currentTime);
@@ -95,12 +100,16 @@ public class WeaponClickListener implements Listener {
             
             // ✅ FULL AUTO STRZAŁ!
             Weapon weaponObj = isWeapon(weapon) ? getWeaponFromItem(weapon) : getWeaponFromItem(weapon);
-            if (weaponObj != null) {
+            if (weaponObj == null) return;
+
+                // ❌ BLOKUJ STRZAŁ PODCZAS RELOADU
+                if (WeaponListener.playerReloading.getOrDefault(player.getName(), false)) {
+                    return;
+                }
+
+                // ✅ STRZAŁ
                 plugin.getWeaponManager().shootWeapon(player, weaponObj, player.isSneaking());
-                
-                // ✅ NOWE: Camera Teleport Effect!
                 applyWeaponRecoil(player, weaponObj);
-            }
             return;
         }
     }
