@@ -1,8 +1,0 @@
-name: WeaponZStats
-version: 1.0.0
-main: com.bartilibiaz.weaponzstats.WeaponZStatsPlugin
-api-version: 1.21
-depend: [WeaponsZ]
-commands:
-  stats:
-    description: Shows your WeaponZ stats
