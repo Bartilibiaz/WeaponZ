@@ -2,6 +2,7 @@ package com.bartilibiaz.weaponsplugin.weapons;
 
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -31,7 +32,10 @@ public class DynamicWeapon extends Weapon {
     private WeaponConfig config;
     private WeaponsPlugin plugin;
     private Map<String, BukkitTask> reloadTasks = new HashMap<>();
-    
+    private final NamespacedKey MOD_CLIP = new NamespacedKey(WeaponsPlugin.getInstance(), "mod_clip");
+    private final NamespacedKey MOD_RECOIL = new NamespacedKey(WeaponsPlugin.getInstance(), "mod_recoil");
+    private final NamespacedKey MOD_SPREAD = new NamespacedKey(WeaponsPlugin.getInstance(), "mod_spread");
+    private final NamespacedKey MOD_RATE = new NamespacedKey(WeaponsPlugin.getInstance(), "mod_rate");
     public DynamicWeapon(WeaponConfig config) {
         super(
             config.getName(),
@@ -45,7 +49,7 @@ public class DynamicWeapon extends Weapon {
         this.config = config;
         this.plugin = WeaponsPlugin.getInstance();
     }
-    
+
     // ✅ GETTER do WeaponConfig
     public WeaponConfig getConfig() {
         return config;
@@ -147,7 +151,7 @@ public class DynamicWeapon extends Weapon {
         playCustomSound(player);
         
         // Pokaż amunicję na action barze
-        player.sendActionBar("§a[" + currentAmmo + "/" + config.getMagazineSize() + "]");
+        // player.sendActionBar("§a[" + currentAmmo + "/" + config.getMagazineSize() + "]");
     }
     
     @Override
@@ -234,13 +238,13 @@ public class DynamicWeapon extends Weapon {
                 if (progress[0] >= maxProgress) {
                     // Usuń magazynek ⚠️ runTask na main thread!
                     Bukkit.getScheduler().runTask(plugin, () -> removeAmmoItem(player));
-                    
+                    int maxAmmo = config.getClipSize(weapon);
                     // Ustaw amunicję w broni na pełną
-                    setWeaponAmmo(weapon, config.getMagazineSize());
+                    setWeaponAmmo(weapon, maxAmmo);
                     
                     // Dźwięk
                     player.playSound(player.getLocation(), config.getSoundReload(), 1.0f, 0.8f);
-                    player.sendActionBar("§6✓ Przeładowana! [" + config.getMagazineSize() + "/" + config.getMagazineSize() + "]");
+                    player.sendActionBar("§6✓ Przeładowana! [" + maxAmmo + "/" + maxAmmo + "]");
                     
                     // Anuluj task
                     BukkitTask taskToCancel = reloadTasks.get(playerName);
@@ -267,21 +271,18 @@ public class DynamicWeapon extends Weapon {
         boolean hitEntity = false;
         double particleStep = 0.15;
         
+        // Pętla raytrace
         for (double distance = 0; distance < config.getRange(); distance += particleStep) {
             
+            // Sprawdzanie bloków (bez zmian)
             Block block = particleLocation.getBlock();
             if (block.getType().isSolid() && !block.isLiquid()) {
                 hitEntity = true;
-                particleLocation.getWorld().spawnParticle(
-                    org.bukkit.Particle.SNOWFLAKE,
-                    particleLocation,
-                    5,
-                    0.1, 0.1, 0.1,
-                    0.05
-                );
+                particleLocation.getWorld().spawnParticle(org.bukkit.Particle.SNOWFLAKE, particleLocation, 5, 0.1, 0.1, 0.1, 0.05);
                 break;
             }
             
+            // Sprawdzanie entity
             List<Entity> nearbyEntities = getNearbyEntities(particleLocation, 0.5);
             for (Entity entity : nearbyEntities) {
                 if (entity.equals(player) || !(entity instanceof LivingEntity)) {
@@ -289,38 +290,45 @@ public class DynamicWeapon extends Weapon {
                 }
                 
                 LivingEntity living = (LivingEntity) entity;
+
+                // Sprawdzenie czy żyje (bez zmian)
+                if (living.isDead() || living.getHealth() <= 0) {
+                    continue;
+                }
                             
-                // 🔥 Tag (NoKnockback / inne pluginy)
+                // Tagowanie (bez zmian)
                 living.addScoreboardTag("weaponz_hit");
                             
-                double damage = config.getDamage();
+                // 🔴 STARY KOD (Usuń to):
+                // double damage = config.getDamage(); 
+
+                // 🟢 NOWY KOD (Wklej to):
+                // 1. Pobieramy item, który gracz trzyma w ręce
+                ItemStack handItem = player.getInventory().getItemInMainHand();
+
+                // 2. Pobieramy obrażenia uwzględniając ten item (dodatki)
+                // WAŻNE: Twoja klasa 'config' musi mieć metodę getDamage(ItemStack stack)!
+                double damage = config.getDamage(handItem); 
                             
-                // 🔥 Zadaj obrażenia
+                // Zadaj obrażenia (z nową wartością)
                 living.damage(damage, player);
                             
-                // 🔥 JEŚLI TO GRACZ → sprawdzamy czy zginie
+                // Sprawdzanie śmierci gracza (Kill Event) - bez zmian
                 if (living instanceof Player victim) {
-                    double finalHealth = victim.getHealth() - damage;
-                
-                    if (finalHealth <= 0) {
+                    if (victim.getHealth() <= 0) { // Tutaj ufasz silnikowi gry
                         Bukkit.getPluginManager().callEvent(
                             new WeaponKillPlayerEvent(player, victim, this)
                         );
                     }
                 }
                 
-                // 🔥 Usuń tag po 1 ticku
+                // Usuwanie tagu (bez zmian)
                 Bukkit.getScheduler().runTaskLater(WeaponsPlugin.getInstance(), () -> {
                     living.removeScoreboardTag("weaponz_hit");
                 }, 1L);
                 
-                particleLocation.getWorld().spawnParticle(
-                    org.bukkit.Particle.SNOWFLAKE,
-                    particleLocation,
-                    10,
-                    0.2, 0.2, 0.2,
-                    0.1
-                );
+                // Efekt trafienia (bez zmian)
+                particleLocation.getWorld().spawnParticle(org.bukkit.Particle.SNOWFLAKE, particleLocation, 10, 0.2, 0.2, 0.2, 0.1);
                 
                 hitEntity = true;
                 break;
@@ -622,4 +630,6 @@ public class DynamicWeapon extends Weapon {
             return false;
         }
     }
+    // Metoda pomocnicza do pobierania magazynka Z MODYFIKATORAMI
+    
 }

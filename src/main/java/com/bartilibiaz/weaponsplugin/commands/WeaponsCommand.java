@@ -4,6 +4,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import com.bartilibiaz.weaponsplugin.api.WeaponZExtension;
 import com.bartilibiaz.weaponsplugin.WeaponsPlugin;
 
 public class WeaponsCommand implements CommandExecutor {
@@ -58,7 +59,15 @@ public class WeaponsCommand implements CommandExecutor {
                 plugin.getLogger().severe("Błąd przy reloadzie broni: " + e.getMessage());
                 e.printStackTrace();
             }
-
+            for (WeaponZExtension extension : plugin.getExtensions()) {
+                try {
+                    extension.onReload();
+                    sender.sendMessage("§a[WeaponZ] Przeładowano dodatek: " + extension.getExtensionName());
+                } catch (Exception e) {
+                    sender.sendMessage("§c[WeaponZ] Błąd przy reloadzie dodatku: " + extension.getExtensionName());
+                    e.printStackTrace();
+                }
+            }
             return true;
         }
 

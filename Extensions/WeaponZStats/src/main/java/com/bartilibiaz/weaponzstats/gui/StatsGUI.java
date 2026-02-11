@@ -8,9 +8,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class StatsGUI {
 
@@ -31,21 +29,17 @@ public class StatsGUI {
         inv.setItem(11, createItem(
                 Material.IRON_SWORD,
                 "§cKills",
-                List.of(
-                        "§7Zabójstwa: §f" + statsManager.getKills(player)
-                )
+                List.of("§7Zabójstwa: §f" + statsManager.getKills(player))
         ));
 
         // 🎯 SHOTS
         inv.setItem(13, createItem(
                 Material.BOW,
                 "§eShots",
-                List.of(
-                        "§7Oddane strzały: §f" + statsManager.getShots(player)
-                )
+                List.of("§7Oddane strzały: §f" + statsManager.getShots(player))
         ));
 
-        // ☠️ DEATHS
+        // Możesz dodać więcej statystyk tutaj...
 
         player.openInventory(inv);
     }
@@ -59,7 +53,6 @@ public class StatsGUI {
             meta.setLore(lore);
             item.setItemMeta(meta);
         }
-
         return item;
     }
 }

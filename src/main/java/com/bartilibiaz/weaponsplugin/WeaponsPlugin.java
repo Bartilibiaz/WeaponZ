@@ -69,6 +69,10 @@ public class WeaponsPlugin extends JavaPlugin {
     public static WeaponsPlugin getInstance() {
         return instance;
     }
+    
+    public List<WeaponZExtension> getExtensions() {
+        return loadedExtensions;
+    }
 
     public WeaponManager getWeaponManager() {
         return weaponManager;

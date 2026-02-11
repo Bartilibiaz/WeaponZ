@@ -1,32 +1,82 @@
 package com.bartilibiaz.weaponzstats.stats;
+
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.io.File;
-import java.io.IOException;
+
 public class StatsManager {
     private final File file;
     private final FileConfiguration config;
+    private final JavaPlugin plugin; // Potrzebne do logowania
+
+    // Cache w pamięci RAM
+    private final Map<UUID, Integer> shotsCache = new HashMap<>();
+    private final Map<UUID, Integer> killsCache = new HashMap<>();
 
     public StatsManager(JavaPlugin plugin) {
-        file = new File(plugin.getDataFolder(), "stats.yml");
+        this.plugin = plugin;
+        this.file = new File(plugin.getDataFolder(), "stats.yml");
 
+        // ✅ NAPRAWIONE TWORZENIE PLIKU
+        createFileIfNotExists();
+
+        this.config = YamlConfiguration.loadConfiguration(file);
+        loadCache();
+    }
+
+    private void createFileIfNotExists() {
         if (!file.exists()) {
             file.getParentFile().mkdirs();
-            plugin.saveResource("stats.yml", false);
+            
+            // Próbujemy zapisać domyślny plik z resources
+            try {
+                plugin.saveResource("stats.yml", false);
+            } catch (IllegalArgumentException e) {
+                // ⚠️ Jeśli pliku nie ma w resources (Twój przypadek), tworzymy pusty plik
+                try {
+                    file.createNewFile();
+                    plugin.getLogger().warning("Utworzono pusty plik stats.yml (brak w resources).");
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+            }
         }
+    }
 
-        config = YamlConfiguration.loadConfiguration(file);
+    private void loadCache() {
+        if (config.contains("players")) {
+            ConfigurationSection players = config.getConfigurationSection("players");
+            if (players == null) return;
+            
+            for (String key : players.getKeys(false)) {
+                try {
+                    UUID uuid = UUID.fromString(key);
+                    shotsCache.put(uuid, config.getInt("players." + key + ".shots", 0));
+                    killsCache.put(uuid, config.getInt("players." + key + ".kills", 0));
+                } catch (IllegalArgumentException e) {
+                    // Ignoruj błędne UUID
+                }
+            }
+        }
     }
 
     public void save() {
+        // Zapisz cache do configu
+        for (Map.Entry<UUID, Integer> entry : shotsCache.entrySet()) {
+            config.set(path(entry.getKey()) + ".shots", entry.getValue());
+        }
+        for (Map.Entry<UUID, Integer> entry : killsCache.entrySet()) {
+            config.set(path(entry.getKey()) + ".kills", entry.getValue());
+        }
+
         try {
             config.save(file);
         } catch (IOException e) {
@@ -40,29 +90,24 @@ public class StatsManager {
 
     // 🔫 STRZAŁ
     public void addShot(Player player) {
-        String base = path(player.getUniqueId());
-        config.set(base + ".shots", getShots(player) + 1);
-        save();
+        shotsCache.merge(player.getUniqueId(), 1, Integer::sum);
     }
 
     public int getShots(Player player) {
-        return config.getInt(path(player.getUniqueId()) + ".shots", 0);
+        return shotsCache.getOrDefault(player.getUniqueId(), 0);
     }
 
     // ☠ KILL
     public void addKill(Player player, String weaponId) {
-        String base = path(player.getUniqueId());
+        killsCache.merge(player.getUniqueId(), 1, Integer::sum);
 
-        config.set(base + ".kills", getKills(player) + 1);
-
-        String weaponPath = base + ".weapons." + weaponId;
+        // Zapis broni od razu do configu (rzadsze zdarzenie)
+        String weaponPath = path(player.getUniqueId()) + ".weapons." + weaponId;
         config.set(weaponPath, config.getInt(weaponPath, 0) + 1);
-
-        save();
     }
 
     public int getKills(Player player) {
-        return config.getInt(path(player.getUniqueId()) + ".kills", 0);
+        return killsCache.getOrDefault(player.getUniqueId(), 0);
     }
 
     public Map<String, Integer> getWeaponKills(Player player) {

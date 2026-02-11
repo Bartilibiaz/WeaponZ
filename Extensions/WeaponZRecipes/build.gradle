@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.bartilibiaz'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "papermc"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+}
+
+dependencies {
+    // API WeaponZ
+    compileOnly files("C:/Users/Bartek/Desktop/Test_plugin/Main/build/libs/WeaponsZ-1.0.0.jar")
+
+    // Paper API
+    compileOnly "io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}

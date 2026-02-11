@@ -1,0 +1,10 @@
+name: WeaponsZAttachments
+main: "com.bartilibiaz.weaponzattachments.WeaponZAttachmentsPlugin"
+api-version: 1.21
+version: 1.0.0
+depend: [WeaponsZ]
+commands:
+  giveattachment:
+    description: Daje dodatek do broni
+    usage: /giveattachment <id>
+    permission: weaponz.admin

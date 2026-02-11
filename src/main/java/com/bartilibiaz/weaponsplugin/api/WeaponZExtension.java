@@ -9,6 +9,7 @@ public interface WeaponZExtension {
      * Called when WeaponZ is disabled
      */
     void onDisable();
+    default void onReload(){};
     String getExtensionName();
 
     /** Extension version shown in console */

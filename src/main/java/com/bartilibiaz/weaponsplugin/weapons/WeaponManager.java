@@ -64,6 +64,26 @@ public class WeaponManager {
             plugin.getLogger().severe("Błąd ładowania broni z " + file.getName() + ": " + e.getMessage());
         }
     }
+    /**
+     * Sprawdza, czy dany przedmiot jest bronią z pluginu WeaponZ.
+     * Weryfikacja odbywa się po CustomModelData.
+     */
+    public boolean isWeapon(org.bukkit.inventory.ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return false;
+        if (!item.getItemMeta().hasCustomModelData()) return false;
+
+        int itemCMD = item.getItemMeta().getCustomModelData();
+
+        // Przeszukujemy wszystkie załadowane bronie
+        // (Zakładam, że mapa z broniami nazywa się 'weapons' lub 'loadedWeapons')
+        for (Weapon weapon : weapons.values()) { 
+            // Sprawdzamy czy broń ma w ogóle model data i czy pasuje do itemu
+            if (weapon.getCustomModelData() == itemCMD) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     public Weapon getWeapon(String name) {
         return weapons.get(name);
